@@ -1,0 +1,9 @@
+export * as authController from './auth.controller';
+export * as kategoriController from './kategori.controller';
+export * as ceritaController from './cerita.controller';
+export * as sceneController from './scene.controller';
+export * as quizController from './quiz.controller';
+export * as userController from './user.controller';
+export * as favoritController from './favorit.controller';
+export * as uploadController from './upload.controller';
+export * as settingController from './setting.controller';

@@ -1,0 +1,219 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ==================== ENUM ====================
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum StatusCerita {
+  DRAFT
+  PUBLISHED
+}
+
+// ==================== USER ====================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nama      String
+  avatar    String?
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  progress    Progress[]
+  favorit     Favorit[]
+  quizResults QuizResult[]
+  ceritaViews CeritaView[]
+
+  @@map("users")
+}
+
+// ==================== KATEGORI ====================
+
+model Kategori {
+  id        String   @id @default(uuid())
+  nama      String   @unique
+  icon      String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  cerita Cerita[]
+
+  @@map("kategori")
+}
+
+// ==================== CERITA ====================
+
+model Cerita {
+  id         String       @id @default(uuid())
+  judul      String
+  deskripsi  String?
+  thumbnail  String?
+  status     StatusCerita @default(DRAFT)
+  views      Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  kategoriId String
+
+  // Relations
+  kategori    Kategori     @relation(fields: [kategoriId], references: [id])
+  scenes      Scene[]
+  quizzes     Quiz[]
+  progress    Progress[]
+  favorit     Favorit[]
+  quizResults QuizResult[]
+  ceritaViews CeritaView[]
+
+  @@index([kategoriId])
+  @@index([status])
+  @@map("cerita")
+}
+
+// ==================== SCENE ====================
+
+model Scene {
+  id        String   @id @default(uuid())
+  urutan    Int
+  gambar    String?
+  teks      String
+  audio     String?
+  ceritaId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  cerita Cerita @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+
+  @@unique([ceritaId, urutan])
+  @@index([ceritaId])
+  @@map("scenes")
+}
+
+// ==================== QUIZ ====================
+
+model Quiz {
+  id         String   @id @default(uuid())
+  pertanyaan String
+  urutan     Int      @default(0)
+  ceritaId   String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  cerita  Cerita           @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+  pilihan PilihanJawaban[]
+
+  @@index([ceritaId])
+  @@map("quizzes")
+}
+
+model PilihanJawaban {
+  id        String   @id @default(uuid())
+  teks      String
+  isBenar   Boolean  @default(false)
+  quizId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId])
+  @@map("pilihan_jawaban")
+}
+
+// ==================== USER ACTIVITY ====================
+
+model Progress {
+  id              String   @id @default(uuid())
+  userId          String
+  ceritaId        String
+  lastSceneUrutan Int      @default(1)
+  completed       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cerita Cerita @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ceritaId])
+  @@index([userId])
+  @@index([ceritaId])
+  @@map("progress")
+}
+
+model QuizResult {
+  id             String   @id @default(uuid())
+  userId         String
+  ceritaId       String
+  score          Int
+  totalQuestions Int
+  createdAt      DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cerita Cerita @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([ceritaId])
+  @@map("quiz_results")
+}
+
+model Favorit {
+  id        String   @id @default(uuid())
+  userId    String
+  ceritaId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cerita Cerita @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ceritaId])
+  @@index([userId])
+  @@index([ceritaId])
+  @@map("favorit")
+}
+
+model CeritaView {
+  id        String   @id @default(uuid())
+  userId    String
+  ceritaId  String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cerita Cerita @relation(fields: [ceritaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ceritaId])
+  @@index([userId])
+  @@index([ceritaId])
+  @@map("cerita_views")
+}
+
+// ==================== APP SETTINGS ====================
+
+model AppSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}

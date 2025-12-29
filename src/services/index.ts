@@ -1,0 +1,9 @@
+export * as authService from './auth.service';
+export * as kategoriService from './kategori.service';
+export * as ceritaService from './cerita.service';
+export * as sceneService from './scene.service';
+export * as quizService from './quiz.service';
+export * as userService from './user.service';
+export * as favoritService from './favorit.service';
+export * as uploadService from './upload.service';
+export * as settingService from './setting.service';
