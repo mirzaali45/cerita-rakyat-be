@@ -15,6 +15,7 @@ app.use(helmet());
 const allowedOrigins = [
   'http://localhost:3000',
   'https://kisah-nusa.vercel.app',
+  'https://kisah-nusa-client.vercel.app/',
   env.CORS_ORIGIN
 ].filter(Boolean) as string[];
 
