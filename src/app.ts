@@ -11,10 +11,25 @@ const app: Application = express();
 // Security middleware
 app.use(helmet());
 
-// CORS
+// CORS - Fixed configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://kisah-nusa.vercel.app',
+  env.CORS_ORIGIN
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN || '*' || "https://kisah-nusa.vercel.app/",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Untuk development, allow semua. Ganti false untuk strict mode
+      }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -23,8 +38,8 @@ app.use(
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 300, // 300 requests per IP
+  windowMs: 15 * 60 * 1000,
+  max: 300,
   message: {
     success: false,
     message: 'Terlalu banyak request, coba lagi nanti',
