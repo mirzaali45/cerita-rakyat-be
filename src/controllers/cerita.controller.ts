@@ -138,21 +138,52 @@ export async function unpublish(req: Request, res: Response): Promise<void> {
 //   }
 // };
 
+// Increment view count (1 user = 1 view per cerita)
 export const incrementView = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.userId;
 
-    await prisma.cerita.update({
-      where: { id },
-      data: {
-        views: {
-          increment: 1,
+    if (!userId) {
+      return errorResponse(res, "User tidak ditemukan", 401);
+    }
+
+    // Cek apakah user sudah pernah view cerita ini
+    const existingView = await prisma.ceritaView.findUnique({
+      where: {
+        userId_ceritaId: {
+          userId,
+          ceritaId: id,
         },
       },
     });
 
+    // Jika sudah pernah view, skip
+    if (existingView) {
+      return successResponse(res, null, "Already viewed");
+    }
+
+    // Jika belum pernah view, tambahkan view
+    await prisma.$transaction([
+      prisma.ceritaView.create({
+        data: {
+          userId,
+          ceritaId: id,
+        },
+      }),
+      prisma.cerita.update({
+        where: { id },
+        data: {
+          views: {
+            increment: 1,
+          },
+        },
+      }),
+    ]);
+
     successResponse(res, null, "View count updated");
   } catch (error) {
+    console.error("incrementView error:", error);
     errorResponse(res, "Gagal update view count");
   }
 };
